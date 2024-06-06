@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+  ceksiak:
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      - CEKSIAK_SIAK_USERNAME=${CEKSIAK_SIAK_USERNAME}
+      - CEKSIAK_SIAK_PASSWORD=${CEKSIAK_SIAK_PASSWORD}
+      - CEKSIAK_BOT_TOKEN=${CEKSIAK_BOT_TOKEN}
+      - CEKSIAK_CHANNEL_ID=${CEKSIAK_CHANNEL_ID}
