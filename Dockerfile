@@ -9,4 +9,4 @@ RUN apk add --no-cache libressl-dev
 
 RUN cargo build --release
 
-CMD ["./target/release/ceksiak"]
+# CMD ["./target/release/ceksiak"]

@@ -75,11 +75,18 @@ impl SIAKSession {
             .await
             .unwrap();
 
-        let parser = scraper::Html::parse_document(&resp.text().await.unwrap());
-        let a = parser
+        let data = resp.text().await.unwrap();
+        let parser = scraper::Html::parse_document(&data);
+        let a = match parser
             .select(&Selector::parse("table.box > tbody > tr:not(.x, .alt)").unwrap())
             .last()
-            .unwrap();
+        {
+            Some(a) => a,
+            None => {
+                log::error!("{:?}", data);
+                return None;
+            }
+        };
         let siblings = a.next_siblings();
         let mut courses: Vec<SIAKCourse> = Vec::new();
 
@@ -163,10 +170,13 @@ impl SIAKSession {
 
     pub fn is_courses_updated(courses: &Vec<SIAKCourse>) -> bool {
         let file = match File::open("./courses.json") {
-            Ok(f) => f,
+            Ok(file) => file,
             Err(_) => return true,
         };
-        let contents: Vec<SIAKCourse> = serde_json::from_reader(file).unwrap();
+        let contents: Vec<SIAKCourse> = match serde_json::from_reader(file) {
+            Ok(contents) => contents,
+            Err(_) => Vec::new(),
+        };
 
         for course in courses {
             if !contents.contains(&course) {

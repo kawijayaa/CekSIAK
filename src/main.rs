@@ -1,3 +1,4 @@
+use log;
 use std::env;
 use std::sync::Arc;
 
@@ -7,14 +8,15 @@ use serenity::all::Ready;
 use serenity::all::{Context, CreateMessage};
 use serenity::async_trait;
 use serenity::builder::CreateEmbed;
+use serenity::model::channel::Channel;
 use serenity::{self, all::GatewayIntents};
 use tokio;
 
 struct Handler;
 
 async fn notify(ctx: &Context, session: Arc<SIAKSession>) {
-    println!("[CekSIAK v2] Notifying...");
-    let channel = ctx
+    log::info!("Notifying...");
+    let channel = match ctx
         .http
         .get_channel(
             env::var("CEKSIAK_CHANNEL_ID")
@@ -24,13 +26,32 @@ async fn notify(ctx: &Context, session: Arc<SIAKSession>) {
                 .into(),
         )
         .await
-        .unwrap()
-        .guild()
-        .unwrap();
-    let courses = session.get_scores().await.unwrap();
+    {
+        Ok(c) => c,
+        Err(_) => {
+            log::error!("Cannot get channel!");
+            return;
+        }
+    };
+
+    let courses = match session.get_scores().await {
+        Some(courses) => courses,
+        None => {
+            log::error!("Cannot get courses! Logging in again...");
+            session
+                .login(
+                    env::var("CEKSIAK_SIAK_USERNAME").unwrap(),
+                    env::var("CEKSIAK_SIAK_PASSWORD").unwrap(),
+                )
+                .await
+                .unwrap();
+            notify(ctx, session).await;
+            return;
+        }
+    };
 
     if !SIAKSession::is_courses_updated(&courses) {
-        println!("[CekSIAK v2] No updates found!");
+        log::info!("No updates found!");
         return;
     }
     SIAKSession::save_courses(&courses);
@@ -47,17 +68,28 @@ async fn notify(ctx: &Context, session: Arc<SIAKSession>) {
             .collect::<Vec<String>>()
             .join("\n"),
     );
-    channel
-        .send_message(&ctx.http, CreateMessage::default().embed(embed))
-        .await
-        .unwrap();
-    println!("[CekSIAK v2] Notified!");
+    match channel {
+        Channel::Guild(ref guild) => {
+            guild
+                .send_message(&ctx.http, CreateMessage::default().embed(embed))
+                .await
+                .unwrap();
+        }
+        Channel::Private(ref private) => {
+            private
+                .send_message(&ctx.http, CreateMessage::default().embed(embed))
+                .await
+                .unwrap();
+        }
+        _ => {}
+    }
+    log::info!("Sent notification to {}!", &channel.id());
 }
 
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, _: Ready) {
-        println!("[CekSIAK v2] Logged in!");
+        log::info!("Logged in!");
         let session = Arc::new(SIAKSession::new());
         session
             .login(
@@ -82,6 +114,7 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
+    env_logger::init();
 
     let token = env::var("CEKSIAK_BOT_TOKEN").unwrap();
     let intents = GatewayIntents::all();
@@ -90,7 +123,7 @@ async fn main() {
         .event_handler(Handler)
         .await
         .unwrap();
-    if let Err(why) = discord.start().await {
-        println!("Client error: {why:?}");
+    if let Err(e) = discord.start().await {
+        log::error!("Client error: {e:?}");
     }
 }
