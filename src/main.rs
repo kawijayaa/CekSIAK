@@ -45,7 +45,7 @@ async fn notify(ctx: &Context, session: Arc<SIAKSession>) {
                 )
                 .await
                 .unwrap();
-            notify(ctx, session).await;
+            Box::pin(notify(ctx, session)).await;
             return;
         }
     };

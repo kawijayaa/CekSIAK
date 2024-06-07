@@ -18,7 +18,7 @@ scraper = "0.19.0"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 serenity = "0.12.2"
-tokio = { version = "1.38.0", features = ["full"] }
+tokio = { version = "1.38.0", features = ["rt-multi-thread"] }
 
 [build]
 rustflags = ["-Z", "threads=8"]
