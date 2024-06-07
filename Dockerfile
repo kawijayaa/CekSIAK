@@ -10,4 +10,4 @@ RUN rustup default nightly
 
 RUN cargo build --release
 
-# CMD ["./target/release/ceksiak"]
+CMD ["./target/release/ceksiak"]
