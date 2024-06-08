@@ -83,7 +83,6 @@ impl SIAKSession {
         {
             Some(a) => a,
             None => {
-                log::error!("{:?}", data);
                 return None;
             }
         };
