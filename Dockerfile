@@ -1,13 +1,12 @@
-FROM rust:alpine
+FROM debian:latest
 
 WORKDIR /app
 
-COPY . .
+RUN apt update && apt install -y
+RUN apt install libssl-dev -y
 
-RUN apk add --no-cache musl-dev
-RUN apk add --no-cache libressl-dev
-RUN rustup default nightly
-
-RUN cargo build --release
+COPY target/ target/
+COPY ui.ac.id.pem .
+COPY courses.json* .
 
 CMD ["./target/release/ceksiak"]
