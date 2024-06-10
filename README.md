@@ -14,4 +14,4 @@ CEKSIAK_BOT_TOKEN=
 CEKSIAK_CHANNEL_ID=
 ```
 
-3. If you are using Docker, run `docker-compose up -d` to start the bot. If you don't want to use Docker, run `cargo run` to start the bot.
+3. Run using `./run.sh`
